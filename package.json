@@ -3,12 +3,14 @@
   "description": "A Node.js-based controller module for the Raspberry Pi camera. Forked from troyth/node-raspicam, rewritten in TypeScript.",
   "version": "0.0.1",
   "homepage": "https://github.com/alexeden/node-raspicam",
+  "main": "dist/raspicam",
   "author": {
     "name": "Alex Eden",
     "email": "alexandereden91@gmail.com"
   },
   "scripts": {
-    "build": "tsc -d -p lib"
+    "build": "tsc -d -p lib",
+    "postinstall": "npm run build"
   },
   "keywords": [
     "raspberry pi",
@@ -29,7 +31,6 @@
       "url": "https://github.com/troyth/node-raspicam/blob/master/LICENSE"
     }
   ],
-  "main": "dist/raspicam",
   "engines": {
     "node": ">=6.11.3"
   },

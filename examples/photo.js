@@ -1,7 +1,9 @@
-var RaspiCam = require("../lib/raspicam");
+var RaspiCam = require("../dist/raspicam");
+
+console.log('RaspiCam: ', RaspiCam);
 
 
-var camera = new RaspiCam({
+var camera = RaspiCam.create({
 	mode: "photo",
 	output: "./photo/image.jpg",
 	encoding: "jpg",

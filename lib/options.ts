@@ -13,39 +13,74 @@ export interface RaspicamOptions {
   timeout: number;
 }
 
-export const RaspicamParameters = {
-  w: 'width',
-  h: 'height',
-  q: 'quality',
-  o: 'output',
-  t: 'timeout',
-  th: 'thumb',
-  e: 'encoding',
-  x: 'exif',
-  tl: 'timelapse',
-  sh: 'sharpness',
-  co: 'contrast',
-  br: 'brightness',
-  sa: 'saturation',
-  ISO: 'ISO',
-  ev: 'ev',
-  ex: 'exposure',
-  awb: 'awb',
-  ifx: 'imxfx',
-  cfx: 'colfx',
-  mm: 'metering',
-  rot: 'rotation'
-};
+export interface ImageParameters {
+  /* Controls */
+  width: number;
+  height: number;
+  quality: number;
+  sharpness: number;
+  contrast: number;
+  brightness: number;
+  saturation: number;
+  rotation: number;
+  shutter: number;
+  exposure: ExposureMode;
+  awb: AWBMode;
 
-export const RaspicamFlags = {
-  r: 'raw',
-  v: 'verbose',
-  d: 'demo',
-  p: 'preview',
-  f: 'fullscreen',
-  op: 'opacity',
-  n: 'nopreview',
-  vs: 'vstab',
-  hf: 'hflip',
-  vf: 'vflip'
-};
+  /* Flags */
+  decimate: boolean;
+  hflip: boolean;
+  vflip: boolean;
+  ISO: boolean;
+  vstab: boolean;
+}
+
+export const imageFlags: (keyof ImageParameters)[] =
+  [ 'decimate'
+  , 'hflip'
+  , 'vflip'
+  , 'ISO'
+  , 'vstab'
+  ];
+
+export const imageControls: (keyof ImageParameters)[] =
+  [ 'width'
+  , 'height'
+  , 'quality'
+  , 'sharpness'
+  , 'contrast'
+  , 'brightness'
+  , 'saturation'
+  , 'rotation'
+  , 'shutter'
+  , 'exposure'
+  , 'awb'
+  ];
+
+
+export type ExposureMode
+  = 'off'
+  | 'auto'
+  | 'night'
+  | 'nightpreview'
+  | 'backlight'
+  | 'spotlight'
+  | 'sports'
+  | 'snow'
+  | 'beach'
+  | 'verylong'
+  | 'fixedfps'
+  | 'antishake'
+  | 'fireworks';
+
+export type AWBMode
+  = 'off'
+  | 'auto'
+  | 'sun'
+  | 'cloud'
+  | 'shade'
+  | 'tungsten'
+  | 'fluorescent'
+  | 'incandescent'
+  | 'flash'
+  | 'horizon';

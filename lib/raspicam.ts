@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 import { spawn, ChildProcess } from 'child_process';
 import * as chalk from 'chalk';
 import * as fs from 'fs';
-import { RaspicamOptions } from './options';
+import { RaspicamOptions, imageFlags, imageControls, ImageParameters } from './options';
 
 // maximum timeout allowed by raspicam command
 const INFINITY_MS = 999999999;
@@ -57,13 +57,8 @@ export class Raspicam extends EventEmitter  {
       fs.chmodSync(this.filepath, 0o755); // set write permissions
     }
 
-    // child process
-    this.child_process = null;
-
-    // directory watcher
-    this.watcher = null;
-
-    // events.EventEmitter.call(this);
+    this.child_process = null; // child process
+    this.watcher = null; // directory watcher
     process.on('exit', () => this.destroy());
   }
 
@@ -110,19 +105,24 @@ export class Raspicam extends EventEmitter  {
     this.watchDirectory();
 
     // build the arguments
-    var args = [];
+    // var args = [];
+    const args
+      = Object.keys(this.opts)
+          .map((opt: keyof ImageParameters) => {
+            if (imageFlags.includes(opt)) {
+              return `--${opt}`;
+            }
+            else if (imageControls.includes(opt)) {
+              return `--${opt}=${this.opts[opt as keyof RaspicamOptions].toString()}`;
+            }
+            else {
+              this.opts.log(`unknown options argument: "${opt}"`);
+              return null;
+            }
+          })
+          .filter(opt => opt !== null);
 
-    for (var opt in this.opts) {
-      if (opt !== 'mode' && opt !== 'log') {
-        args.push('--' + opt);
-        // don't add value for true flags
-        if (this.opts[opt].toString() !== 'true' && this.opts[opt].toString() !== 'false') {
-          args.push(this.opts[opt].toString());
-        }
-      }
-    }
-
-    var cmd;
+    let cmd;
 
     switch(this.opts.mode) {
       case 'photo':
@@ -132,10 +132,10 @@ export class Raspicam extends EventEmitter  {
         cmd = TIMELAPSE_CMD;
 
         // if no timelapse frequency provided, return false
-        if (typeof this.opts.timelapse === 'undefined') {
-          this.emit('start', 'Error: must specify timelapse frequency option', new Date().getTime());
-          return false;
-        }
+        // if (typeof this.opts.timelapse === 'undefined') {
+        //   this.emit('start', 'Error: must specify timelapse frequency option', new Date().getTime());
+        //   return false;
+        // }
         // if not timeout provided, set to longest possible
         if (typeof this.opts.timeout === 'undefined') {
           this.opts.timeout = INFINITY_MS;
@@ -152,7 +152,7 @@ export class Raspicam extends EventEmitter  {
     // start child process
     this.opts.log('calling....');
     this.opts.log(cmd + ' ' + args.join(' '));
-    this.child_process = spawn(cmd, args);
+    this.child_process = spawn(cmd, args as string[]);
 
     // set up listeners for stdout, stderr and process exit
     this.addChildProcessListeners();
@@ -222,7 +222,6 @@ export class Raspicam extends EventEmitter  {
   set<K extends keyof RaspicamOptions>(opt: K, value: RaspicamOptions[K]) {
     this.opts[opt] = value;
   }
-
 }
 
 /*

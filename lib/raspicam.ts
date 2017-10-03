@@ -42,14 +42,18 @@ export class Raspicam extends EventEmitter  {
   }
 
   set output(output: string) {
+    this.opts.log(`setting output using "${output}"`);
     this.filename = output.substr(output.lastIndexOf('/') + 1);
     this.filepath = output.substr(0, output.lastIndexOf('/') + 1) || './';
+    this.opts.log(`filename is "${this.filename}"`);
+    this.opts.log(`filepath is "${this.filepath}"`);
   }
 
   private constructor(
     private opts: RaspicamOptions
   ) {
     super();
+    this.output = this.opts.output;
 
     // Create the filepath if it doesn't already exist.
     if (!fs.existsSync(this.filepath)) {

@@ -1,25 +1,24 @@
 {
   "name": "raspicam",
-  "description": "A Node.js-based controller module for the Raspberry Pi camera based on a command structure similar to Johnny-Five",
-  "version": "0.2.14",
-  "homepage": "https://github.com/troyth/node-raspicam",
+  "description": "A Node.js-based controller module for the Raspberry Pi camera. Forked from troyth/node-raspicam, rewritten in TypeScript.",
+  "version": "0.0.1",
+  "homepage": "https://github.com/alexeden/node-raspicam",
   "author": {
-    "name": "Troy Conrad Therrien <troyth@gmail.com>",
-    "email": "troyth@gmail.com"
+    "name": "Alex Eden",
+    "email": "alexandereden91@gmail.com"
   },
   "keywords": [
     "raspberry pi",
     "camera",
     "raspicam",
-    "node",
-    "johnny-five"
+    "node"
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/troyth/node-raspicam.git"
+    "url": "git://github.com/alexeden/node-raspicam.git"
   },
   "bugs": {
-    "url": "https://github.com/troyth/node-raspicam/issues"
+    "url": "https://github.com/alexeden/node-raspicam/issues"
   },
   "licenses": [
     {
@@ -27,9 +26,9 @@
       "url": "https://github.com/troyth/node-raspicam/blob/master/LICENSE"
     }
   ],
-  "main": "lib/raspicam",
+  "main": "dist/raspicam",
   "engines": {
-    "node": ">=0.10.0"
+    "node": ">=6.11.3"
   },
   "dependencies": {
     "lodash": "*"

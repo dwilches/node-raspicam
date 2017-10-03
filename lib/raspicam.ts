@@ -79,6 +79,7 @@ export class Raspicam extends EventEmitter  {
     }
 
     // start watching the directory where the images will be stored to emit signals on each new photo saved
+    this.opts.log(`setting up watcher on path "${this.filepath}"`);
     this.watcher = fs.watch(this.filepath, (event, filename) => {
       // rename is called once, change is called 3 times, so check for rename to elimate duplicates
       if (event === 'rename') {
@@ -117,7 +118,7 @@ export class Raspicam extends EventEmitter  {
               return `--${opt}`;
             }
             else if (imageControls.includes(opt)) {
-              return `--${opt}=${this.opts[opt as keyof RaspicamOptions].toString()}`;
+              return `--${opt} ${this.opts[opt as keyof RaspicamOptions].toString()}`;
             }
             else {
               this.opts.log(`unknown options argument: "${opt}"`);
@@ -159,11 +160,9 @@ export class Raspicam extends EventEmitter  {
     this.child_process = spawn(cmd, args as string[]);
 
     // set up listeners for stdout, stderr and process exit
-    this.addChildProcessListeners();
+    this.addChildProcessListeners(this.child_process);
 
     this.emit('start', null, new Date().getTime());
-
-
     return true;
   }
 
@@ -192,31 +191,26 @@ export class Raspicam extends EventEmitter  {
   * Adds listeners to the child process spawned to take pictures
   * or record video (raspistill or raspivideo).
   **/
-  private addChildProcessListeners() {
-    if (this.child_process !== null) {
-      this.child_process.stdout.on('data', data => {
-        this.opts.log('stdout: ' + data);
-      });
+  private addChildProcessListeners(childProcess: ChildProcess) {
+    childProcess.stdout.on('data', data => {
+      this.opts.log('stdout: ' + data);
+    });
 
-      this.child_process.stderr.on('data', data => {
-        this.opts.log('stderr: ' + data);
-      });
+    childProcess.stderr.on('data', data => {
+      this.opts.log('stderr: ' + data);
+    });
 
-      this.child_process.on('close', code => {
-        this.child_process = null;
+    childProcess.on('close', code => {
+      this.child_process = null;
 
-        if (this.watcher !== null) {
-          this.watcher.close(); // remove the file watcher
-          this.watcher = null;
-        }
+      if (this.watcher !== null) {
+        this.watcher.close(); // remove the file watcher
+        this.watcher = null;
+      }
 
-        // emit exit signal for process chaining over time
-        this.emit('exit', new Date().getTime());
-      });
-    }
-    else {
-      throw new Error('addChildProcessListeners called with no child_process running');
-    }
+      // emit exit signal for process chaining over time
+      this.emit('exit', new Date().getTime());
+    });
   }
 
   get<K extends keyof RaspicamOptions>(opt: K): RaspicamOptions[K] {

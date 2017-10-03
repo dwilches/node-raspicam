@@ -7,6 +7,9 @@
     "name": "Alex Eden",
     "email": "alexandereden91@gmail.com"
   },
+  "scripts": {
+    "build": "tsc -d -p lib"
+  },
   "keywords": [
     "raspberry pi",
     "camera",
@@ -31,14 +34,19 @@
     "node": ">=6.11.3"
   },
   "dependencies": {
-    "lodash": "*"
+    "chalk": "^2.1.0",
+    "lodash": "^4.17.4"
   },
   "devDependencies": {
+    "@types/chalk": "^0.4.31",
+    "@types/lodash": "^4.14.76",
+    "@types/node": "^8.0.31",
     "grunt": "~0.4.1",
     "grunt-cli": "^1.2.0",
     "grunt-contrib-jshint": "~0.6.0",
     "grunt-contrib-nodeunit": "~0.2.0",
     "grunt-jsbeautifier": "~0.2.2",
-    "sinon": "~1.7.3"
+    "sinon": "~1.7.3",
+    "typescript": "^2.5.3"
   }
 }

@@ -125,7 +125,9 @@ export class Raspicam extends EventEmitter  {
               return null;
             }
           })
-          .filter(opt => opt !== null);
+          .filter(opt => opt !== null)
+          .reduce((accum, opt: string) => [...accum, ...opt.split(' ')], []);
+
 
     let cmd;
 

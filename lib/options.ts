@@ -24,6 +24,7 @@ export interface ImageParameters {
   saturation: number;
   rotation: number;
   shutter: number;
+  output: string;
   exposure: ExposureMode;
   awb: AWBMode;
 
@@ -44,7 +45,8 @@ export const imageFlags: (keyof ImageParameters)[] =
   ];
 
 export const imageControls: (keyof ImageParameters)[] =
-  [ 'width'
+  [ 'output'
+  , 'width'
   , 'height'
   , 'quality'
   , 'sharpness'

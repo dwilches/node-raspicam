@@ -22,6 +22,7 @@ var events_1 = require("events");
 var child_process_1 = require("child_process");
 var chalk = require("chalk");
 var fs = require("fs");
+var path = require("path");
 var options_1 = require("./options");
 // maximum timeout allowed by raspicam command
 var INFINITY_MS = 999999999;
@@ -34,36 +35,40 @@ var VIDEO_CMD = '/opt/vc/bin/raspivid';
  */
 var Raspicam = /** @class */ (function (_super) {
     __extends(Raspicam, _super);
+    // set output(output: string) {
+    //   this.opts.log(`setting output using "${output}"`);
+    //   const absolute = path.resolve(process.cwd(), output);
+    //   const { base, dir } = path.parse(absolute);
+    //   this.filename = base;
+    //   this.filepath = dir;
+    //   this.opts.log(`filename is "${this.filename}"`);
+    //   this.opts.log(`filepath is "${this.filepath}"`);
+    // }
+    // get output(): string {
+    //
+    // }
     function Raspicam(opts) {
         var _this = _super.call(this) || this;
         _this.opts = opts;
         _this.child_process = null;
         _this.watcher = null;
-        _this.filename = '';
-        _this.filepath = '';
-        _this.output = _this.opts.output;
-        // Create the filepath if it doesn't already exist.
-        if (!fs.existsSync(_this.filepath)) {
-            fs.mkdirSync(_this.filepath);
-            fs.chmodSync(_this.filepath, 493); // set write permissions
-        }
+        var _a = _this.opts, filename = _a.filename, filepath = _a.filepath;
+        // console.log();
+        _this.path = path.parse(path.resolve(process.cwd(), filepath, filename));
+        console.log(_this.path);
         _this.child_process = null; // child process
         _this.watcher = null; // directory watcher
         process.on('exit', function () { return _this.destroy(); });
         return _this;
     }
     Raspicam.create = function (partialOpts) {
-        var opts = __assign({ mode: 'photo', output: process.cwd(), width: 640, height: 480, delay: 0, quality: 100, encoding: 'jpg', log: console.log.bind(console, chalk.magenta('raspicam')), timeout: INFINITY_MS }, partialOpts);
+        var opts = __assign({ mode: 'photo', filename: 'image.jpg', filepath: process.cwd(), width: 640, height: 480, delay: 0, quality: 100, encoding: 'jpg', log: console.log.bind(console, chalk.magenta('raspicam')), timeout: INFINITY_MS }, partialOpts);
         opts.log('opts', opts);
         return new Raspicam(opts);
     };
     Object.defineProperty(Raspicam.prototype, "output", {
-        set: function (output) {
-            this.opts.log("setting output using \"" + output + "\"");
-            this.filename = output.substr(output.lastIndexOf('/') + 1);
-            this.filepath = output.substr(0, output.lastIndexOf('/') + 1) || './';
-            this.opts.log("filename is \"" + this.filename + "\"");
-            this.opts.log("filepath is \"" + this.filepath + "\"");
+        get: function () {
+            return path.resolve(this.path.dir, this.path.base);
         },
         enumerable: true,
         configurable: true
@@ -75,13 +80,18 @@ var Raspicam = /** @class */ (function (_super) {
     };
     Raspicam.prototype.watchDirectory = function () {
         var _this = this;
+        // Create the filepath if it doesn't already exist.
+        if (!fs.existsSync(this.path.dir)) {
+            fs.mkdirSync(this.path.dir);
+            fs.chmodSync(this.path.dir, 493); // set write permissions
+        }
         // close previous directory watcher if any
         if (this.watcher !== null) {
             this.watcher.close();
         }
         // start watching the directory where the images will be stored to emit signals on each new photo saved
-        this.opts.log("setting up watcher on path \"" + this.filepath + "\"");
-        this.watcher = fs.watch(this.filepath, function (event, filename) {
+        this.opts.log("setting up watcher on path \"" + this.path.dir + "\"");
+        this.watcher = fs.watch(this.path.dir, function (event, filename) {
             // rename is called once, change is called 3 times, so check for rename to elimate duplicates
             if (event === 'rename') {
                 _this.opts.log('raspicam::watcher::event ' + event);
@@ -149,7 +159,7 @@ var Raspicam = /** @class */ (function (_super) {
         }
         // start child process
         this.opts.log('calling....');
-        this.opts.log(cmd + ' ' + args.join(' '));
+        this.opts.log(cmd + (" --output \"" + this.output + "\" ") + args.join(' '));
         this.child_process = child_process_1.spawn(cmd, args);
         // set up listeners for stdout, stderr and process exit
         this.addChildProcessListeners(this.child_process);

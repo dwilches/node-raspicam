@@ -5,14 +5,13 @@ import { RaspicamOptions } from './options';
  * @param {Object} opts Options: mode, freq, delay, width, height, quality, encoding, filepath, filename, timeout
  */
 export declare class Raspicam extends EventEmitter {
-    private opts;
+    opts: RaspicamOptions;
     private child_process;
     private watcher;
-    private filename;
-    private filepath;
+    private path;
     static create(partialOpts: Partial<RaspicamOptions>): Raspicam;
-    output: string;
     private constructor();
+    readonly output: string;
     destroy(): void;
     watchDirectory(): void;
     /**

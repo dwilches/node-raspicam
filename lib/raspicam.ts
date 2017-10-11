@@ -2,6 +2,7 @@ import { EventEmitter } from 'events';
 import { spawn, ChildProcess } from 'child_process';
 import * as chalk from 'chalk';
 import * as fs from 'fs';
+import * as path from 'path';
 import { RaspicamOptions, imageFlags, imageControls, ImageParameters } from './options';
 
 // maximum timeout allowed by raspicam command
@@ -21,13 +22,15 @@ export class Raspicam extends EventEmitter  {
 
   private child_process: ChildProcess|null = null;
   private watcher: fs.FSWatcher|null = null;
-  private filename = '';
-  private filepath = '';
+  // private filename = '';
+  // private filepath = '';
+  private path: path.ParsedPath;
 
   static create(partialOpts: Partial<RaspicamOptions>): Raspicam {
     const opts: RaspicamOptions = {
       mode: 'photo',
-      output: process.cwd(),
+      filename: 'image.jpg',
+      filepath: process.cwd(),
       width: 640,
       height: 480,
       delay: 0,
@@ -40,32 +43,42 @@ export class Raspicam extends EventEmitter  {
 
     opts.log('opts', opts);
 
+
     return new Raspicam(opts);
   }
 
-  set output(output: string) {
-    this.opts.log(`setting output using "${output}"`);
-    this.filename = output.substr(output.lastIndexOf('/') + 1);
-    this.filepath = output.substr(0, output.lastIndexOf('/') + 1) || './';
-    this.opts.log(`filename is "${this.filename}"`);
-    this.opts.log(`filepath is "${this.filepath}"`);
-  }
+  // set output(output: string) {
+  //   this.opts.log(`setting output using "${output}"`);
+  //   const absolute = path.resolve(process.cwd(), output);
+  //   const { base, dir } = path.parse(absolute);
+  //   this.filename = base;
+  //   this.filepath = dir;
+  //   this.opts.log(`filename is "${this.filename}"`);
+  //   this.opts.log(`filepath is "${this.filepath}"`);
+  // }
+
+  // get output(): string {
+  //
+  // }
 
   private constructor(
-    private opts: RaspicamOptions
+    public opts: RaspicamOptions
   ) {
     super();
-    this.output = this.opts.output;
 
-    // Create the filepath if it doesn't already exist.
-    if (!fs.existsSync(this.filepath)) {
-      fs.mkdirSync(this.filepath);
-      fs.chmodSync(this.filepath, 0o755); // set write permissions
-    }
+    const { filename, filepath } = this.opts;
+    // console.log();
+    this.path = path.parse(path.resolve(process.cwd(), filepath, filename));
+    console.log(this.path);
+
 
     this.child_process = null; // child process
     this.watcher = null; // directory watcher
     process.on('exit', () => this.destroy());
+  }
+
+  get output(): string {
+    return path.resolve(this.path.dir, this.path.base);
   }
 
   destroy() {
@@ -75,14 +88,20 @@ export class Raspicam extends EventEmitter  {
   }
 
   watchDirectory() {
+    // Create the filepath if it doesn't already exist.
+    if (!fs.existsSync(this.path.dir)) {
+      fs.mkdirSync(this.path.dir);
+      fs.chmodSync(this.path.dir, 0o755); // set write permissions
+    }
+
     // close previous directory watcher if any
     if (this.watcher !== null) {
       this.watcher.close();
     }
 
     // start watching the directory where the images will be stored to emit signals on each new photo saved
-    this.opts.log(`setting up watcher on path "${this.filepath}"`);
-    this.watcher = fs.watch(this.filepath, (event, filename) => {
+    this.opts.log(`setting up watcher on path "${this.path.dir}"`);
+    this.watcher = fs.watch(this.path.dir, (event, filename) => {
       // rename is called once, change is called 3 times, so check for rename to elimate duplicates
       if (event === 'rename') {
         this.opts.log('raspicam::watcher::event ' + event);
@@ -160,7 +179,7 @@ export class Raspicam extends EventEmitter  {
 
     // start child process
     this.opts.log('calling....');
-    this.opts.log(cmd + ' ' + args.join(' '));
+    this.opts.log(cmd + ` --output "${this.output}" ` + args.join(' '));
     this.child_process = spawn(cmd, args as string[]);
 
     // set up listeners for stdout, stderr and process exit

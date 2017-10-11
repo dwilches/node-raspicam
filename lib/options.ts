@@ -4,7 +4,9 @@ export type RaspicamMode = 'photo' | 'timelapse' | 'video';
 export interface RaspicamOptions {
   mode: RaspicamMode;
   log: (...loggable: any[]) => void;
-  output: string;
+  // output: string;
+  filepath: string;
+  filename: string;
   delay: number;
   width: number;
   height: number;

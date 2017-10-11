@@ -47,6 +47,7 @@
     "grunt-contrib-jshint": "~0.6.0",
     "grunt-contrib-nodeunit": "~0.2.0",
     "grunt-jsbeautifier": "~0.2.2",
+    "rsync": "^0.6.1",
     "sinon": "~1.7.3",
     "typescript": "^2.5.3"
   }

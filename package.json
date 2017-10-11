@@ -10,6 +10,11 @@
   },
   "scripts": {
     "build": "tsc -d -p lib",
+    "build:watch": "nodemon --exec \"npm run build\" -w lib",
+    "exec": "node examples/photo.js",
+    "exec:watch": "nodemon --exec \"npm run exec\" -w examples",
+    "sync": "node rsync.js",
+    "sync:watch": "nodemon --exec \"npm run sync\" -w examples -w lib",
     "postinstall": "npm run build"
   },
   "keywords": [

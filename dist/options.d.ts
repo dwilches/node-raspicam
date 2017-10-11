@@ -20,6 +20,7 @@ export interface ImageParameters {
     saturation: number;
     rotation: number;
     shutter: number;
+    output: string;
     exposure: ExposureMode;
     awb: AWBMode;
     decimate: boolean;

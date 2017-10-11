@@ -11,8 +11,9 @@
   "scripts": {
     "build": "tsc -d -p lib",
     "build:watch": "nodemon --exec \"npm run build\" -w lib",
-    "exec": "node examples/photo.js",
-    "exec:watch": "nodemon --exec \"npm run exec\" -w examples",
+    "build-sync:watch": "nodemon --exec \"npm run build && npm run sync\" -w lib -w examples",
+    "exec": "ts-node --project $PWD/examples examples/photo.ts",
+    "exec:watch": "nodemon --exec \"npm run exec\" -w examples -w dist",
     "sync": "node rsync.js",
     "sync:watch": "nodemon --exec \"npm run sync\" -w examples -w lib",
     "postinstall": "npm run build"

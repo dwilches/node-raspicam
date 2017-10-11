@@ -26,7 +26,7 @@ export declare class Raspicam extends EventEmitter {
     * Adds listeners to the child process spawned to take pictures
     * or record video (raspistill or raspivideo).
     **/
-    private addChildProcessListeners();
+    private addChildProcessListeners(childProcess);
     get<K extends keyof RaspicamOptions>(opt: K): RaspicamOptions[K];
     set<K extends keyof RaspicamOptions>(opt: K, value: RaspicamOptions[K]): void;
 }

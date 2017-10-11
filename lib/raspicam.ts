@@ -38,6 +38,8 @@ export class Raspicam extends EventEmitter  {
       ...partialOpts
     };
 
+    opts.log('opts', opts);
+
     return new Raspicam(opts);
   }
 

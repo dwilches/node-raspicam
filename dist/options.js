@@ -6,7 +6,8 @@ exports.imageFlags = ['decimate',
     'ISO',
     'vstab'
 ];
-exports.imageControls = ['width',
+exports.imageControls = ['output',
+    'width',
     'height',
     'quality',
     'sharpness',

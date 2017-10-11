@@ -41,6 +41,7 @@ var Raspicam = /** @class */ (function (_super) {
         _this.watcher = null;
         _this.filename = '';
         _this.filepath = '';
+        _this.output = _this.opts.output;
         // Create the filepath if it doesn't already exist.
         if (!fs.existsSync(_this.filepath)) {
             fs.mkdirSync(_this.filepath);
@@ -53,12 +54,16 @@ var Raspicam = /** @class */ (function (_super) {
     }
     Raspicam.create = function (partialOpts) {
         var opts = __assign({ mode: 'photo', output: process.cwd(), width: 640, height: 480, delay: 0, quality: 100, encoding: 'jpg', log: console.log.bind(console, chalk.magenta('raspicam')), timeout: INFINITY_MS }, partialOpts);
+        opts.log('opts', opts);
         return new Raspicam(opts);
     };
     Object.defineProperty(Raspicam.prototype, "output", {
         set: function (output) {
+            this.opts.log("setting output using \"" + output + "\"");
             this.filename = output.substr(output.lastIndexOf('/') + 1);
             this.filepath = output.substr(0, output.lastIndexOf('/') + 1) || './';
+            this.opts.log("filename is \"" + this.filename + "\"");
+            this.opts.log("filepath is \"" + this.filepath + "\"");
         },
         enumerable: true,
         configurable: true
@@ -75,6 +80,7 @@ var Raspicam = /** @class */ (function (_super) {
             this.watcher.close();
         }
         // start watching the directory where the images will be stored to emit signals on each new photo saved
+        this.opts.log("setting up watcher on path \"" + this.filepath + "\"");
         this.watcher = fs.watch(this.filepath, function (event, filename) {
             // rename is called once, change is called 3 times, so check for rename to elimate duplicates
             if (event === 'rename') {
@@ -108,14 +114,15 @@ var Raspicam = /** @class */ (function (_super) {
                 return "--" + opt;
             }
             else if (options_1.imageControls.includes(opt)) {
-                return "--" + opt + "=" + _this.opts[opt].toString();
+                return "--" + opt + " " + _this.opts[opt].toString();
             }
             else {
                 _this.opts.log("unknown options argument: \"" + opt + "\"");
                 return null;
             }
         })
-            .filter(function (opt) { return opt !== null; });
+            .filter(function (opt) { return opt !== null; })
+            .reduce(function (accum, opt) { return accum.concat(opt.split(' ')); }, []);
         var cmd;
         switch (this.opts.mode) {
             case 'photo':
@@ -145,7 +152,7 @@ var Raspicam = /** @class */ (function (_super) {
         this.opts.log(cmd + ' ' + args.join(' '));
         this.child_process = child_process_1.spawn(cmd, args);
         // set up listeners for stdout, stderr and process exit
-        this.addChildProcessListeners();
+        this.addChildProcessListeners(this.child_process);
         this.emit('start', null, new Date().getTime());
         return true;
     };
@@ -171,28 +178,23 @@ var Raspicam = /** @class */ (function (_super) {
     * Adds listeners to the child process spawned to take pictures
     * or record video (raspistill or raspivideo).
     **/
-    Raspicam.prototype.addChildProcessListeners = function () {
+    Raspicam.prototype.addChildProcessListeners = function (childProcess) {
         var _this = this;
-        if (this.child_process !== null) {
-            this.child_process.stdout.on('data', function (data) {
-                _this.opts.log('stdout: ' + data);
-            });
-            this.child_process.stderr.on('data', function (data) {
-                _this.opts.log('stderr: ' + data);
-            });
-            this.child_process.on('close', function (code) {
-                _this.child_process = null;
-                if (_this.watcher !== null) {
-                    _this.watcher.close(); // remove the file watcher
-                    _this.watcher = null;
-                }
-                // emit exit signal for process chaining over time
-                _this.emit('exit', new Date().getTime());
-            });
-        }
-        else {
-            throw new Error('addChildProcessListeners called with no child_process running');
-        }
+        childProcess.stdout.on('data', function (data) {
+            _this.opts.log('stdout: ' + data);
+        });
+        childProcess.stderr.on('data', function (data) {
+            _this.opts.log('stderr: ' + data);
+        });
+        childProcess.on('close', function (code) {
+            _this.child_process = null;
+            if (_this.watcher !== null) {
+                _this.watcher.close(); // remove the file watcher
+                _this.watcher = null;
+            }
+            // emit exit signal for process chaining over time
+            _this.emit('exit', new Date().getTime());
+        });
     };
     Raspicam.prototype.get = function (opt) {
         return this.opts[opt];

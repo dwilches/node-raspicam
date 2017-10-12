@@ -18,11 +18,19 @@ var __assign = (this && this.__assign) || Object.assign || function(t) {
     return t;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+/*
+  Link to the hardware: https://www.raspberrypi.org/documentation/hardware/camera/README.md
+  Link to software: https://www.raspberrypi.org/documentation/raspbian/applications/camera.md
+
+  Warnings:
+  - Setting timeout to 0 will cause raspistill to keep running and capture images
+*/
 var events_1 = require("events");
 var child_process_1 = require("child_process");
 var chalk = require("chalk");
 var fs = require("fs");
 var path = require("path");
+// import * as strftime from 'strftime';
 var options_1 = require("./options");
 // maximum timeout allowed by raspicam command
 var INFINITY_MS = 999999999;
@@ -30,39 +38,21 @@ var INFINITY_MS = 999999999;
 var PHOTO_CMD = '/opt/vc/bin/raspistill';
 var TIMELAPSE_CMD = '/opt/vc/bin/raspistill';
 var VIDEO_CMD = '/opt/vc/bin/raspivid';
-/**
- * @param {Object} opts Options: mode, freq, delay, width, height, quality, encoding, filepath, filename, timeout
- */
 var Raspicam = /** @class */ (function (_super) {
     __extends(Raspicam, _super);
-    // set output(output: string) {
-    //   this.opts.log(`setting output using "${output}"`);
-    //   const absolute = path.resolve(process.cwd(), output);
-    //   const { base, dir } = path.parse(absolute);
-    //   this.filename = base;
-    //   this.filepath = dir;
-    //   this.opts.log(`filename is "${this.filename}"`);
-    //   this.opts.log(`filepath is "${this.filepath}"`);
-    // }
-    // get output(): string {
-    //
-    // }
     function Raspicam(opts) {
         var _this = _super.call(this) || this;
         _this.opts = opts;
-        _this.child_process = null;
+        _this.childProcess = null;
         _this.watcher = null;
         var _a = _this.opts, filename = _a.filename, filepath = _a.filepath;
-        // console.log();
         _this.path = path.parse(path.resolve(process.cwd(), filepath, filename));
         console.log(_this.path);
-        _this.child_process = null; // child process
-        _this.watcher = null; // directory watcher
         process.on('exit', function () { return _this.destroy(); });
         return _this;
     }
     Raspicam.create = function (partialOpts) {
-        var opts = __assign({ mode: 'photo', filename: 'image.jpg', filepath: process.cwd(), width: 640, height: 480, delay: 0, quality: 100, encoding: 'jpg', log: console.log.bind(console, chalk.magenta('raspicam')), timeout: INFINITY_MS }, partialOpts);
+        var opts = __assign({ mode: 'photo', filename: 'image.jpg', filepath: process.cwd(), encoding: 'jpg', delay: 0, height: 480, quality: 75, rotation: 0, timeout: 0, width: 640, log: console.log.bind(console, chalk.magenta('raspicam')) }, partialOpts);
         opts.log('opts', opts);
         return new Raspicam(opts);
     };
@@ -74,34 +64,37 @@ var Raspicam = /** @class */ (function (_super) {
         configurable: true
     });
     Raspicam.prototype.destroy = function () {
-        if (this.child_process !== null) {
-            this.child_process.kill();
+        if (this.childProcess !== null) {
+            this.childProcess.kill();
         }
     };
     Raspicam.prototype.watchDirectory = function () {
         var _this = this;
         // Create the filepath if it doesn't already exist.
         if (!fs.existsSync(this.path.dir)) {
+            this.opts.log("creating directory at \"" + this.path.dir + "\", captured data will be saved there");
             fs.mkdirSync(this.path.dir);
             fs.chmodSync(this.path.dir, 493); // set write permissions
         }
         // close previous directory watcher if any
         if (this.watcher !== null) {
+            this.opts.log('closing an existing file watcher');
             this.watcher.close();
         }
         // start watching the directory where the images will be stored to emit signals on each new photo saved
         this.opts.log("setting up watcher on path \"" + this.path.dir + "\"");
-        this.watcher = fs.watch(this.path.dir, function (event, filename) {
+        this.watcher = fs.watch(this.path.dir, { recursive: true })
+            .on('error', function (error) { return console.log('fs.watch error: ', error); })
+            .on('change', function (event, filename) {
+            _this.opts.log("watcher \"" + event + "\" event from file: " + filename);
             // rename is called once, change is called 3 times, so check for rename to elimate duplicates
             if (event === 'rename') {
-                _this.opts.log('raspicam::watcher::event ' + event);
                 // only emit read event if it is not a temporary file
-                if (filename.indexOf('~') === -1) {
+                if (!filename.toString().endsWith('~')) {
                     _this.emit('read', null, new Date().getTime(), filename);
                 }
             }
             else {
-                _this.opts.log('raspicam::watcher::event ' + event);
                 _this.emit(event, null, new Date().getTime(), filename);
             }
         });
@@ -112,27 +105,9 @@ var Raspicam = /** @class */ (function (_super) {
      */
     Raspicam.prototype.start = function () {
         var _this = this;
-        if (this.child_process !== null) {
+        if (this.childProcess !== null) {
             return false;
         }
-        this.watchDirectory();
-        // build the arguments
-        // var args = [];
-        var args = Object.keys(this.opts)
-            .map(function (opt) {
-            if (options_1.imageFlags.includes(opt)) {
-                return "--" + opt;
-            }
-            else if (options_1.imageControls.includes(opt)) {
-                return "--" + opt + " " + _this.opts[opt].toString();
-            }
-            else {
-                _this.opts.log("unknown options argument: \"" + opt + "\"");
-                return null;
-            }
-        })
-            .filter(function (opt) { return opt !== null; })
-            .reduce(function (accum, opt) { return accum.concat(opt.split(' ')); }, []);
         var cmd;
         switch (this.opts.mode) {
             case 'photo':
@@ -157,12 +132,45 @@ var Raspicam = /** @class */ (function (_super) {
                 this.emit('start', 'Error: mode must be photo, timelapse or video', new Date().getTime());
                 return false;
         }
+        // build the arguments
+        var args = Object.keys(this.opts)
+            .map(function (opt) {
+            if (options_1.imageFlags.includes(opt)) {
+                return "--" + opt;
+            }
+            else if (options_1.imageControls.includes(opt)) {
+                return "--" + opt + " " + _this.opts[opt].toString();
+            }
+            else {
+                _this.opts.log("unknown options argument: \"" + opt + "\"");
+                return null;
+            }
+        })
+            .filter(function (opt) { return opt !== null; })
+            .reduce(function (accum, opt) { return accum.concat(opt.split(' ')); }, ['--output', this.output, '--nopreview', '--verbose']);
+        this.watchDirectory();
         // start child process
         this.opts.log('calling....');
-        this.opts.log(cmd + (" --output \"" + this.output + "\" ") + args.join(' '));
-        this.child_process = child_process_1.spawn(cmd, args);
+        this.opts.log(cmd + args.join(' '));
+        this.childProcess
+            = child_process_1.spawn(cmd, args)
+                .on('exit', function (code, signal) { return _this.opts.log('exit event, code: ', code, ' signal: ', signal); })
+                .on('disconnect', function () { return _this.opts.log('disconnect event'); })
+                .on('error', function (error) { return _this.opts.log('error event', error); })
+                .on('message', function (message) { return _this.opts.log('message event', message); })
+                .on('readable', function () { return _this.opts.log('readable event'); })
+                .on('close', function (code, signal) {
+                _this.opts.log('close event, code: ', code, ' signal: ', signal);
+                // emit exit signal for process chaining over time
+                _this.emit('exit', new Date().getTime());
+            });
         // set up listeners for stdout, stderr and process exit
-        this.addChildProcessListeners(this.child_process);
+        this.childProcess.stdout.on('data', function (data) {
+            _this.opts.log('stdout: ' + data);
+        });
+        this.childProcess.stderr.on('data', function (data) {
+            _this.opts.log('stderr: ' + data);
+        });
         this.emit('start', null, new Date().getTime());
         return true;
     };
@@ -172,9 +180,11 @@ var Raspicam = /** @class */ (function (_super) {
         // close previous directory watcher if any
         if (this.watcher !== null) {
             this.watcher.close();
+            this.watcher = null;
         }
-        if (this.child_process !== null) {
-            this.child_process.kill();
+        if (this.childProcess !== null) {
+            this.childProcess.kill();
+            this.childProcess = null;
             this.emit('stop', null, new Date().getTime());
             return true;
         }
@@ -182,29 +192,6 @@ var Raspicam = /** @class */ (function (_super) {
             this.emit('stop', 'Error: no process was running', new Date().getTime());
             return false;
         }
-    };
-    /**
-    * addChildProcessListeners()
-    * Adds listeners to the child process spawned to take pictures
-    * or record video (raspistill or raspivideo).
-    **/
-    Raspicam.prototype.addChildProcessListeners = function (childProcess) {
-        var _this = this;
-        childProcess.stdout.on('data', function (data) {
-            _this.opts.log('stdout: ' + data);
-        });
-        childProcess.stderr.on('data', function (data) {
-            _this.opts.log('stderr: ' + data);
-        });
-        childProcess.on('close', function (code) {
-            _this.child_process = null;
-            if (_this.watcher !== null) {
-                _this.watcher.close(); // remove the file watcher
-                _this.watcher = null;
-            }
-            // emit exit signal for process chaining over time
-            _this.emit('exit', new Date().getTime());
-        });
     };
     Raspicam.prototype.get = function (opt) {
         return this.opts[opt];
@@ -215,28 +202,3 @@ var Raspicam = /** @class */ (function (_super) {
     return Raspicam;
 }(events_1.EventEmitter));
 exports.Raspicam = Raspicam;
-/*
-Converts any abbreviated opts to their full word equivalent and assigns to this.
-hashOpts(opts) {
-  for(let opt in opts) {
-    if (opt.length <= 3) {
-
-      // if this opt is in the parameters hash
-      if (typeof parameters[opt] !== 'undefined') {
-
-        // reassign it to the full word
-        this.opts[parameters[opt]] = opts[opt];
-        delete this.opts[opt];
-      }
-
-      // if this opt is in the flags hash
-      if (typeof flags[opt] !== 'undefined') {
-
-        // reassign it to the full word
-        this.opts[flags[opt]] = opts[opt];
-        delete this.opts[opt];
-      }
-    }
-  }
-}
-*/

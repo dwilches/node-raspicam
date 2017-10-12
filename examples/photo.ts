@@ -1,7 +1,4 @@
 import { Raspicam } from '../dist/raspicam';
-// const RaspiCam = require('../dist/raspicam');
-
-console.log('Raspicam: ', Raspicam);
 
 const now = new Date();
 
@@ -10,21 +7,26 @@ const camera = Raspicam.create({
   filepath: './photo',
   filename: `image-${now.toLocaleDateString()}-${now.toLocaleTimeString()}.jpg`,
   encoding: 'jpg',
-  width: 640,
-  height: 480,
-  timeout: 0 // take the picture immediately
+  rotation: 180,
+  // width: 3000,
+  timeout: 1 // take the picture immediately
 });
 
+let startTime = 0;
 camera.on('start', function( err, timestamp ){
+  startTime = timestamp;
   console.log('photo started at ' + timestamp );
 });
 
 camera.on('read', function( err, timestamp, filename ){
   console.log('photo image captured with filename: ' + filename );
+  camera.stop();
 });
 
 camera.on('exit', function( timestamp, ...args: any[] ){
+  console.log('stopping camera');
   console.log('photo child process has exited at ' + timestamp );
+  console.log('total time: ', (timestamp - startTime)/1000);
 });
 
 camera.start();

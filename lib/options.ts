@@ -10,7 +10,9 @@ export interface RaspicamOptions {
   delay: number;
   width: number;
   height: number;
+  rotation: number;
   quality: number;
+  // annotate: string;
   encoding: 'jpg' | 'bmp' | 'gif' | 'png';
   timeout: number;
 }
@@ -20,7 +22,10 @@ export interface ImageParameters {
   width: number;
   height: number;
   quality: number;
+  timeout: number;
   sharpness: number;
+  annotate: string;
+
   contrast: number;
   brightness: number;
   saturation: number;
@@ -50,9 +55,11 @@ export const imageControls: (keyof ImageParameters)[] =
   [ 'output'
   , 'width'
   , 'height'
+  // , 'annotate'
   , 'quality'
   , 'sharpness'
   , 'contrast'
+  , 'timeout'
   , 'brightness'
   , 'saturation'
   , 'rotation'

@@ -56,7 +56,7 @@ export const imageControls: (keyof ImageParameters)[] =
   , 'width'
   , 'height'
   // , 'annotate'
-  , 'quality'
+  // , 'quality'
   , 'sharpness'
   , 'contrast'
   , 'timeout'

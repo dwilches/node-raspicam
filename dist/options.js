@@ -10,8 +10,8 @@ exports.imageControls = ['output',
     'width',
     'height'
     // , 'annotate'
+    // , 'quality'
     ,
-    'quality',
     'sharpness',
     'contrast',
     'timeout',

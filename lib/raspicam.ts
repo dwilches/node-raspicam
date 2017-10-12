@@ -87,7 +87,7 @@ export class Raspicam extends EventEmitter  {
       .on('error', error => console.log('fs.watch error: ', error))
       // 'rename' is emitted whenever a filename appears or disappears in the directory
       .on('change', (event, filename) => {
-        this.opts.log(`watcher "${event}" event from file: ${filename}`);
+        // this.opts.log(`watcher "${event}" event from file: ${filename}`);
 
         // rename is called once, change is called 3 times, so check for rename to elimate duplicates
         if (event === 'rename') {

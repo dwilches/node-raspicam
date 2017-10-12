@@ -86,7 +86,7 @@ var Raspicam = /** @class */ (function (_super) {
         this.watcher = fs.watch(this.path.dir, { recursive: true })
             .on('error', function (error) { return console.log('fs.watch error: ', error); })
             .on('change', function (event, filename) {
-            _this.opts.log("watcher \"" + event + "\" event from file: " + filename);
+            // this.opts.log(`watcher "${event}" event from file: ${filename}`);
             // rename is called once, change is called 3 times, so check for rename to elimate duplicates
             if (event === 'rename') {
                 // only emit read event if it is not a temporary file

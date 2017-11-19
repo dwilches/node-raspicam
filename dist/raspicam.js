@@ -48,7 +48,7 @@ var Raspicam = /** @class */ (function (_super) {
         _this.watcher = null;
         var _a = _this.opts, filename = _a.filename, filepath = _a.filepath;
         _this.path = path.parse(path.resolve(process.cwd(), filepath, filename));
-        console.log(_this.path);
+        opts.log(_this.path);
         process.on('exit', function () { return _this.destroy(); });
         return _this;
     }
@@ -85,7 +85,7 @@ var Raspicam = /** @class */ (function (_super) {
         // start watching the directory where the images will be stored to emit signals on each new photo saved
         this.opts.log("setting up watcher on path \"" + this.path.dir + "\"");
         this.watcher = fs.watch(this.path.dir, { recursive: true })
-            .on('error', function (error) { return console.log('fs.watch error: ', error); })
+            .on('error', function (error) { return console.error('fs.watch error: ', error); })
             .on('change', function (event, filename) {
             // this.opts.log(`watcher "${event}" event from file: ${filename}`);
             // rename is called once, change is called 3 times, so check for rename to elimate duplicates

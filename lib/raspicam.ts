@@ -54,7 +54,7 @@ export class Raspicam extends EventEmitter  {
     super();
     const { filename, filepath } = this.opts;
     this.path = path.parse(path.resolve(process.cwd(), filepath, filename));
-    console.log(this.path);
+    opts.log(this.path);
     process.on('exit', () => this.destroy());
   }
 
@@ -85,7 +85,7 @@ export class Raspicam extends EventEmitter  {
     // start watching the directory where the images will be stored to emit signals on each new photo saved
     this.opts.log(`setting up watcher on path "${this.path.dir}"`);
     this.watcher = fs.watch(this.path.dir, { recursive: true })
-      .on('error', error => console.log('fs.watch error: ', error))
+      .on('error', error => console.error('fs.watch error: ', error))
       // 'rename' is emitted whenever a filename appears or disappears in the directory
       .on('change', (event, filename) => {
         // this.opts.log(`watcher "${event}" event from file: ${filename}`);

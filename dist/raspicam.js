@@ -30,6 +30,7 @@ var child_process_1 = require("child_process");
 var chalk = require("chalk");
 var fs = require("fs");
 var path = require("path");
+var _ = require("lodash");
 // import * as strftime from 'strftime';
 var options_1 = require("./options");
 // maximum timeout allowed by raspicam command
@@ -136,10 +137,10 @@ var Raspicam = /** @class */ (function (_super) {
         // build the arguments
         var args = Object.keys(this.opts)
             .map(function (opt) {
-            if (options_1.imageFlags.includes(opt)) {
+            if (_.includes(options_1.imageFlags, opt)) {
                 return "--" + opt;
             }
-            else if (options_1.imageControls.includes(opt)) {
+            else if (_.includes(options_1.imageControls, opt)) {
                 return "--" + opt + " " + (imageParamOverride[opt] || _this.opts[opt].toString());
             }
             else {

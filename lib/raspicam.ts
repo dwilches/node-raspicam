@@ -10,6 +10,7 @@ import { spawn, ChildProcess } from 'child_process';
 import * as chalk from 'chalk';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as _ from 'lodash';
 // import * as strftime from 'strftime';
 import { RaspicamOptions, imageFlags, imageControls, ImageParameters } from './options';
 
@@ -143,10 +144,10 @@ export class Raspicam extends EventEmitter  {
     const args
       = Object.keys(this.opts)
           .map((opt: keyof ImageParameters) => {
-            if (imageFlags.includes(opt)) {
+            if (_.includes(imageFlags, opt)) {
               return `--${opt}`;
             }
-            else if (imageControls.includes(opt)) {
+            else if (_.includes(imageControls, opt)) {
               return `--${opt} ${imageParamOverride[opt] || this.opts[opt as keyof RaspicamOptions].toString()}`;
             }
             else {

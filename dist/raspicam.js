@@ -103,8 +103,9 @@ var Raspicam = /** @class */ (function (_super) {
      * start Take a snapshot or start a timelapse or video recording
      * @return {Object} instance
      */
-    Raspicam.prototype.start = function () {
+    Raspicam.prototype.start = function (imageParamOverride) {
         var _this = this;
+        if (imageParamOverride === void 0) { imageParamOverride = {}; }
         if (this.childProcess !== null) {
             return false;
         }
@@ -139,7 +140,7 @@ var Raspicam = /** @class */ (function (_super) {
                 return "--" + opt;
             }
             else if (options_1.imageControls.includes(opt)) {
-                return "--" + opt + " " + _this.opts[opt].toString();
+                return "--" + opt + " " + (imageParamOverride[opt] || _this.opts[opt].toString());
             }
             else {
                 _this.opts.log("unknown options argument: \"" + opt + "\"");

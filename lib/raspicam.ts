@@ -106,7 +106,7 @@ export class Raspicam extends EventEmitter  {
    * start Take a snapshot or start a timelapse or video recording
    * @return {Object} instance
    */
-  start() {
+  start(imageParamOverride: Partial<ImageParameters> = {}) {
 
     if (this.childProcess !== null) {
       return false;
@@ -147,7 +147,7 @@ export class Raspicam extends EventEmitter  {
               return `--${opt}`;
             }
             else if (imageControls.includes(opt)) {
-              return `--${opt} ${this.opts[opt as keyof RaspicamOptions].toString()}`;
+              return `--${opt} ${imageParamOverride[opt] || this.opts[opt as keyof RaspicamOptions].toString()}`;
             }
             else {
               this.opts.log(`unknown options argument: "${opt}"`);

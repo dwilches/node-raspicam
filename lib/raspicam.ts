@@ -39,6 +39,7 @@ export class Raspicam extends EventEmitter  {
     private childProcess: ChildProcess|null = null;
     private watcher: fs.FSWatcher|null = null;
     private basedir: string;
+    private cmd: string;
 
     public opts: RaspicamOptions;
 
@@ -58,6 +59,12 @@ export class Raspicam extends EventEmitter  {
         // if no timeout is provided, set it to the longest possible
         if (typeof this.opts.timeout === 'undefined') {
             this.opts.timeout = INFINITY_MS;
+        }
+
+        this.cmd = COMMANDS[this.opts.mode];
+        if (!this.cmd) {
+            this.opts.log("Warning: mode must be photo, timelapse or video");
+            throw "mode must be photo, timelapse or video";
         }
 
         this.opts.debug('opts', this.opts);
@@ -122,12 +129,6 @@ export class Raspicam extends EventEmitter  {
             return false;
         }
 
-        const cmd = COMMANDS[this.opts.mode];
-        if (!cmd) {
-            this.emit('start', 'Error: mode must be photo, timelapse or video', new Date().getTime());
-            return false;
-        }
-
         const overridenOpts: {[key: string]: any} = _.defaults(imageParamOverride, this.opts);
         this.opts.debug('opts', overridenOpts);
 
@@ -154,8 +155,8 @@ export class Raspicam extends EventEmitter  {
 
         // start child process
         this.opts.debug('calling....');
-        this.opts.debug(cmd, args);
-        this.childProcess = spawn(cmd, args as string[])
+        this.opts.debug(this.cmd, args);
+        this.childProcess = spawn(this.cmd, args as string[])
 
         // The 'exit' event is emitted after the child process ends.
         // If the process exited, code is the final exit code of the process, otherwise null.

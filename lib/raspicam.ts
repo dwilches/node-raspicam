@@ -67,12 +67,13 @@ export class Raspicam extends EventEmitter  {
             this.opts.log("Warning: Setting timeout to 0 will cause raspistill to keep running and capture images");
         }
 
-        process.on('exit', () => this.destroy());
+        process.on('exit', () => this.killChildProcess());
     }
 
-    destroy() {
+    killChildProcess() {
         if (this.childProcess !== null) {
             this.childProcess.kill();
+            this.childProcess = null;
         }
     }
 
@@ -199,8 +200,7 @@ export class Raspicam extends EventEmitter  {
         }
 
         if (this.childProcess !== null) {
-            this.childProcess.kill();
-            this.childProcess = null;
+            this.killChildProcess();
             this.emit('stop', null, new Date().getTime());
             return true;
         }

@@ -141,10 +141,9 @@ export class Raspicam extends EventEmitter  {
                 }
                 else {
                     this.opts.log(`unknown options argument: "${opt}"`);
-                    return null;
+                    return '';
                 }
             })
-            .filter(opt => opt !== null)
             .reduce(
                 (accum, opt: string) => [...accum, ...opt.split(' ')],
                 ['--output', this.output, '--nopreview']

@@ -127,14 +127,17 @@ export class Raspicam extends EventEmitter  {
             return false;
         }
 
+        const overridenOpts = _.defaults(imageParamOverride, this.opts);
+        this.opts.debug('opts', overridenOpts);
+
         // build the arguments
-        const args = Object.keys(this.opts)
+        const args = Object.keys(overridenOpts)
             .map((opt: keyof ImageParameters) => {
                 if (_.includes(imageFlags, opt)) {
                     return `--${opt}`;
                 }
                 else if (_.includes(imageControls, opt)) {
-                    return `--${opt} ${imageParamOverride[opt] || this.opts[opt as keyof RaspicamOptions].toString()}`;
+                    return `--${opt} ${overridenOpts[opt]}`;
                 }
                 else {
                     this.opts.log(`unknown options argument: "${opt}"`);

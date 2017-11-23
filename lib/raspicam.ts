@@ -17,10 +17,11 @@ import { RaspicamOptions, imageFlags, imageControls, ImageParameters } from './o
 // maximum timeout allowed by raspicam command
 const INFINITY_MS = 999999999;
 
-// commands
-const PHOTO_CMD = '/opt/vc/bin/raspistill';
-const TIMELAPSE_CMD = '/opt/vc/bin/raspistill';
-const VIDEO_CMD = '/opt/vc/bin/raspivid';
+const COMMANDS = {
+    'photo': '/opt/vc/bin/raspistill',
+    'timelapse': '/opt/vc/bin/raspistill',
+    'video':  '/opt/vc/bin/raspivid'
+};
 
 const DEFAULT_OPTIONS: RaspicamOptions = {
     mode: 'photo',
@@ -119,21 +120,10 @@ export class Raspicam extends EventEmitter  {
             return false;
         }
 
-        let cmd;
-
-        switch(this.opts.mode) {
-            case 'photo':
-                cmd = PHOTO_CMD;
-                break;
-            case 'timelapse':
-                cmd = TIMELAPSE_CMD;
-                break;
-            case 'video':
-                cmd = VIDEO_CMD;
-                break;
-            default:
-                this.emit('start', 'Error: mode must be photo, timelapse or video', new Date().getTime());
-                return false;
+        const cmd = COMMANDS[this.opts.mode];
+        if (!cmd) {
+            this.emit('start', 'Error: mode must be photo, timelapse or video', new Date().getTime());
+            return false;
         }
 
         // build the arguments

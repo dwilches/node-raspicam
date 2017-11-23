@@ -16,6 +16,7 @@ export interface RaspicamOptions {
     // annotate: string;
     encoding: 'jpg' | 'bmp' | 'gif' | 'png';
     timeout: number;
+    verbose: boolean;
 }
 
 export interface ImageParameters {
@@ -42,6 +43,7 @@ export interface ImageParameters {
     vflip: boolean;
     ISO: boolean;
     vstab: boolean;
+    verbose: boolean;
 }
 
 export const imageFlags: (keyof ImageParameters)[] =
@@ -50,6 +52,7 @@ export const imageFlags: (keyof ImageParameters)[] =
         , 'vflip'
         , 'ISO'
         , 'vstab'
+        , 'verbose'
     ];
 
 export const imageControls: (keyof ImageParameters)[] =

@@ -35,7 +35,8 @@ const DEFAULT_OPTIONS: RaspicamOptions = {
     timeout: 1,
     width: 640,
     debug: console.log.bind(console, chalk.magenta('raspicam')),
-    log: console.log.bind(console, chalk.green('raspicam'))
+    log: console.log.bind(console, chalk.green('raspicam')),
+    verbose: false
 };
 
 export class Raspicam extends EventEmitter  {
@@ -127,8 +128,7 @@ export class Raspicam extends EventEmitter  {
         }
 
         // build the arguments
-        const args
-            = Object.keys(this.opts)
+        const args = Object.keys(this.opts)
             .map((opt: keyof ImageParameters) => {
                 if (_.includes(imageFlags, opt)) {
                     return `--${opt}`;
@@ -144,7 +144,7 @@ export class Raspicam extends EventEmitter  {
             .filter(opt => opt !== null)
             .reduce(
                 (accum, opt: string) => [...accum, ...opt.split(' ')],
-                ['--output', this.output, '--nopreview', '--verbose']
+                ['--output', this.output, '--nopreview']
             );
 
 
@@ -153,8 +153,8 @@ export class Raspicam extends EventEmitter  {
         // start child process
         this.opts.debug('calling....');
         this.opts.debug(cmd + args.join(' '));
-        this.childProcess
-            = spawn(cmd, args as string[])
+        this.childProcess = spawn(cmd, args as string[])
+
         // The 'exit' event is emitted after the child process ends.
         // If the process exited, code is the final exit code of the process, otherwise null.
         // If the process terminated due to receipt of a signal,

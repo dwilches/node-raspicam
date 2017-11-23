@@ -21,15 +21,14 @@ const COMMANDS = {
 
 const DEFAULT_OPTIONS: RaspicamOptions = {
     mode: 'photo',
-    filename: `image-${new Date().toUTCString()}.jpg`,
-    filepath: process.cwd(),
+    output: `./image-${new Date().toUTCString()}.jpg`,
     encoding: 'jpg',
-    delay: 0,
-    height: 480,
     quality: 75,
     rotation: 0,
-    timeout: 1,
     width: 640,
+    height: 480,
+    delay: 0,
+    timeout: 1,
     debug: console.log.bind(console, chalk.magenta('raspicam')),
     log: console.log.bind(console, chalk.green('raspicam')),
     verbose: false
@@ -39,7 +38,7 @@ export class Raspicam extends EventEmitter  {
 
     private childProcess: ChildProcess|null = null;
     private watcher: fs.FSWatcher|null = null;
-    private path: path.ParsedPath;
+    private basedir: string;
 
     public opts: RaspicamOptions;
 
@@ -48,8 +47,7 @@ export class Raspicam extends EventEmitter  {
 
         this.opts = _.defaults(partialOpts, DEFAULT_OPTIONS);
 
-        const { filename, filepath } = this.opts;
-        this.path = path.parse(path.resolve(process.cwd(), filepath, filename));
+        this.basedir = path.parse(this.opts.output).dir;
 
         // if not timeout provided, set to longest possible
         if (typeof this.opts.timeout === 'undefined') {
@@ -57,17 +55,13 @@ export class Raspicam extends EventEmitter  {
         }
 
         this.opts.debug('opts', this.opts);
-        this.opts.debug('path', this.path);
+        this.opts.debug('basedir', this.basedir);
 
         if (this.opts.mode === 'photo' && this.opts.timeout === 0) {
             this.opts.log("Warning: Setting timeout to 0 will cause raspistill to keep running and capture images");
         }
 
         process.on('exit', () => this.destroy());
-    }
-
-    get output(): string {
-        return path.resolve(this.path.dir, this.path.base);
     }
 
     destroy() {
@@ -78,10 +72,10 @@ export class Raspicam extends EventEmitter  {
 
     watchDirectory() {
         // Create the filepath if it doesn't already exist.
-        if (!fs.existsSync(this.path.dir)) {
-            this.opts.debug(`creating directory at "${this.path.dir}", captured data will be saved there`);
-            fs.mkdirSync(this.path.dir);
-            fs.chmodSync(this.path.dir, 0o755); // set write permissions
+        if (!fs.existsSync(this.basedir)) {
+            this.opts.debug(`creating directory at "${this.basedir}", captured data will be saved there`);
+            fs.mkdirSync(this.basedir);
+            fs.chmodSync(this.basedir, 0o755); // set write permissions
         }
 
         // close previous directory watcher if any
@@ -91,8 +85,8 @@ export class Raspicam extends EventEmitter  {
         }
 
         // start watching the directory where the images will be stored to emit signals on each new photo saved
-        this.opts.debug(`setting up watcher on path "${this.path.dir}"`);
-        this.watcher = fs.watch(this.path.dir, { recursive: true })
+        this.opts.debug(`setting up watcher on path "${this.basedir}"`);
+        this.watcher = fs.watch(this.basedir, { recursive: true })
             .on('error', error => console.error('fs.watch error: ', error))
             // 'rename' is emitted whenever a filename appears or disappears in the directory
             .on('change', (event, filename) => {
@@ -146,7 +140,7 @@ export class Raspicam extends EventEmitter  {
             })
             .value();
 
-        args.push('--output', this.output, '--nopreview');
+        args.push('--nopreview');
 
 
         this.watchDirectory();

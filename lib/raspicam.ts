@@ -131,30 +131,29 @@ export class Raspicam extends EventEmitter  {
         this.opts.debug('opts', overridenOpts);
 
         // build the arguments
-        const args = Object.keys(overridenOpts)
-            .map((opt: keyof ImageParameters) => {
+        const args = _.chain(Object.keys(overridenOpts))
+            .flatMap((opt: keyof ImageParameters) => {
                 if (_.includes(imageFlags, opt)) {
-                    return `--${opt}`;
+                    return [`--${opt}`];
                 }
                 else if (_.includes(imageControls, opt)) {
-                    return `--${opt} ${overridenOpts[opt]}`;
+                    return [`--${opt}`, overridenOpts[opt]];
                 }
                 else {
                     this.opts.log(`unknown options argument: "${opt}"`);
-                    return '';
+                    return [];
                 }
             })
-            .reduce(
-                (accum, opt: string) => [...accum, ...opt.split(' ')],
-                ['--output', this.output, '--nopreview']
-            );
+            .value();
+
+        args.push('--output', this.output, '--nopreview');
 
 
         this.watchDirectory();
 
         // start child process
         this.opts.debug('calling....');
-        this.opts.debug(cmd + args.join(' '));
+        this.opts.debug(cmd, args);
         this.childProcess = spawn(cmd, args as string[])
 
         // The 'exit' event is emitted after the child process ends.

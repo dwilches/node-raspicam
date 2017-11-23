@@ -47,9 +47,15 @@ export class Raspicam extends EventEmitter  {
 
         this.opts = _.defaults(partialOpts, DEFAULT_OPTIONS);
 
-        this.basedir = path.parse(this.opts.output).dir;
+        const parsedPath: path.ParsedPath = path.parse(this.opts.output);
+        this.basedir = parsedPath.dir;
+        if (parsedPath.ext !== this.opts.encoding) {
+            this.opts.log(`Warning: Filename's extension (${parsedPath.ext}) differs from the encoding (${this.opts.encoding}). Using encoding.`);
+            parsedPath.ext = this.opts.encoding;
+            this.opts.output = path.format(parsedPath);
+        }
 
-        // if not timeout provided, set to longest possible
+        // if no timeout is provided, set it to the longest possible
         if (typeof this.opts.timeout === 'undefined') {
             this.opts.timeout = INFINITY_MS;
         }

@@ -1,9 +1,6 @@
 /*
   Link to the hardware: https://www.raspberrypi.org/documentation/hardware/camera/README.md
   Link to software: https://www.raspberrypi.org/documentation/raspbian/applications/camera.md
-
-  Warnings:
-  - Setting timeout to 0 will cause raspistill to keep running and capture images
 */
 import { EventEmitter } from 'events';
 import { spawn, ChildProcess } from 'child_process';
@@ -11,7 +8,6 @@ import * as chalk from 'chalk';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as _ from 'lodash';
-// import * as strftime from 'strftime';
 import { RaspicamOptions, imageFlags, imageControls } from './options';
 
 // maximum timeout allowed by raspicam command
@@ -62,6 +58,10 @@ export class Raspicam extends EventEmitter  {
 
         this.opts.debug('opts', this.opts);
         this.opts.debug('path', this.path);
+
+        if (this.opts.mode === 'photo' && this.opts.timeout === 0) {
+            this.opts.log("Warning: Setting timeout to 0 will cause raspistill to keep running and capture images");
+        }
 
         process.on('exit', () => this.destroy());
     }

@@ -30,8 +30,6 @@ export const imageControls =
     [ 'output'
         , 'width'
         , 'height'
-        // , 'annotate'
-        // , 'quality'
         , 'sharpness'
         , 'contrast'
         , 'timeout'

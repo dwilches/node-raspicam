@@ -46,7 +46,7 @@ export class Raspicam extends EventEmitter  {
     public constructor(partialOpts: Partial<RaspicamOptions>) {
         super();
 
-        this.opts = _.defaults(this.opts, DEFAULT_OPTIONS);
+        this.opts = _.defaults(partialOpts, DEFAULT_OPTIONS);
 
         const { filename, filepath } = this.opts;
         this.path = path.parse(path.resolve(process.cwd(), filepath, filename));

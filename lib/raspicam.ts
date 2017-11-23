@@ -22,39 +22,40 @@ const PHOTO_CMD = '/opt/vc/bin/raspistill';
 const TIMELAPSE_CMD = '/opt/vc/bin/raspistill';
 const VIDEO_CMD = '/opt/vc/bin/raspivid';
 
+const DEFAULT_OPTIONS: RaspicamOptions = {
+    mode: 'photo',
+    filename: 'image.jpg',
+    filepath: process.cwd(),
+    encoding: 'jpg',
+    delay: 0,
+    height: 480,
+    quality: 75,
+    rotation: 0,
+    timeout: 1,
+    width: 640,
+    debug: console.log.bind(console, chalk.magenta('raspicam')),
+    log: console.log.bind(console, chalk.green('raspicam'))
+};
+
 export class Raspicam extends EventEmitter  {
 
   private childProcess: ChildProcess|null = null;
   private watcher: fs.FSWatcher|null = null;
   private path: path.ParsedPath;
 
-  static create(partialOpts: Partial<RaspicamOptions>): Raspicam {
-    const opts: RaspicamOptions = {
-      mode: 'photo',
-      filename: 'image.jpg',
-      filepath: process.cwd(),
-      encoding: 'jpg',
-      delay: 0,
-      height: 480,
-      quality: 75,
-      rotation: 0,
-      timeout: 0,
-      width: 640,
-      log: console.log.bind(console, chalk.magenta('raspicam')),
-      ...partialOpts
-    };
+  public opts: RaspicamOptions;
 
-    opts.log('opts', opts);
-    return new Raspicam(opts);
-  }
-
-  private constructor(
-    public opts: RaspicamOptions
-  ) {
+  public constructor(partialOpts: Partial<RaspicamOptions>) {
     super();
+
+    this.opts = _.defaults(this.opts, DEFAULT_OPTIONS);
+
     const { filename, filepath } = this.opts;
     this.path = path.parse(path.resolve(process.cwd(), filepath, filename));
-    opts.log(this.path);
+
+    this.opts.debug('opts', this.opts);
+    this.opts.debug('path', this.path);
+
     process.on('exit', () => this.destroy());
   }
 
@@ -71,19 +72,19 @@ export class Raspicam extends EventEmitter  {
   watchDirectory() {
     // Create the filepath if it doesn't already exist.
     if (!fs.existsSync(this.path.dir)) {
-      this.opts.log(`creating directory at "${this.path.dir}", captured data will be saved there`);
+      this.opts.debug(`creating directory at "${this.path.dir}", captured data will be saved there`);
       fs.mkdirSync(this.path.dir);
       fs.chmodSync(this.path.dir, 0o755); // set write permissions
     }
 
     // close previous directory watcher if any
     if (this.watcher !== null) {
-      this.opts.log('closing an existing file watcher');
+      this.opts.debug('closing an existing file watcher');
       this.watcher.close();
     }
 
     // start watching the directory where the images will be stored to emit signals on each new photo saved
-    this.opts.log(`setting up watcher on path "${this.path.dir}"`);
+    this.opts.debug(`setting up watcher on path "${this.path.dir}"`);
     this.watcher = fs.watch(this.path.dir, { recursive: true })
       .on('error', error => console.error('fs.watch error: ', error))
       // 'rename' is emitted whenever a filename appears or disappears in the directory
@@ -162,12 +163,11 @@ export class Raspicam extends EventEmitter  {
           );
 
 
-
     this.watchDirectory();
 
     // start child process
-    this.opts.log('calling....');
-    this.opts.log(cmd + args.join(' '));
+    this.opts.debug('calling....');
+    this.opts.debug(cmd + args.join(' '));
     this.childProcess
       = spawn(cmd, args as string[])
           // The 'exit' event is emitted after the child process ends.
@@ -177,21 +177,21 @@ export class Raspicam extends EventEmitter  {
           // One of the two will always be non-null.
           // Note that when the 'exit' event is triggered,
           // child process stdio streams might still be open.
-          .on('exit', (code, signal) => this.opts.log('exit event, code: ', code, ' signal: ', signal))
-          .on('disconnect', () => this.opts.log('disconnect event'))
-          .on('error', error => this.opts.log('error event', error))
-          .on('message', message => this.opts.log('message event', message))
-          .on('readable', () => this.opts.log('readable event'))
+          .on('exit', (code, signal) => this.opts.debug('exit event, code: ', code, ' signal: ', signal))
+          .on('disconnect', () => this.opts.debug('disconnect event'))
+          .on('error', error => this.opts.debug('error event', error))
+          .on('message', message => this.opts.debug('message event', message))
+          .on('readable', () => this.opts.debug('readable event'))
           // The 'close' event is emitted when the stdio streams of a child process have been closed
           .on('close', (code, signal) => {
-            this.opts.log('close event, code: ', code, ' signal: ', signal);
+            this.opts.debug('close event, code: ', code, ' signal: ', signal);
             // emit exit signal for process chaining over time
             this.emit('exit', new Date().getTime());
           });
 
     // set up listeners for stdout, stderr and process exit
     this.childProcess.stdout.on('data', data => {
-      this.opts.log('stdout: ' + data);
+      this.opts.debug('stdout: ' + data);
     });
 
     this.childProcess.stderr.on('data', data => {

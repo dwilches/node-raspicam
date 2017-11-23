@@ -21,7 +21,7 @@ const COMMANDS = {
 
 const DEFAULT_OPTIONS: RaspicamOptions = {
     mode: 'photo',
-    filename: 'image.jpg',
+    filename: `image-${new Date().toUTCString()}.jpg`,
     filepath: process.cwd(),
     encoding: 'jpg',
     delay: 0,

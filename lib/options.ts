@@ -32,8 +32,8 @@ export interface ImageParameters {
     rotation: number;
     shutter: number;
     output: string;
-    exposure: ExposureMode;
-    awb: AWBMode;
+    exposure: string;
+    awb: string;
 
     /* Flags */
     decimate: boolean;
@@ -69,31 +69,3 @@ export const imageControls: (keyof ImageParameters)[] =
         , 'exposure'
         , 'awb'
     ];
-
-
-export type ExposureMode
-    = 'off'
-    | 'auto'
-    | 'night'
-    | 'nightpreview'
-    | 'backlight'
-    | 'spotlight'
-    | 'sports'
-    | 'snow'
-    | 'beach'
-    | 'verylong'
-    | 'fixedfps'
-    | 'antishake'
-    | 'fireworks';
-
-export type AWBMode
-    = 'off'
-    | 'auto'
-    | 'sun'
-    | 'cloud'
-    | 'shade'
-    | 'tungsten'
-    | 'fluorescent'
-    | 'incandescent'
-    | 'flash'
-    | 'horizon';

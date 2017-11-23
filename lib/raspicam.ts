@@ -12,7 +12,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as _ from 'lodash';
 // import * as strftime from 'strftime';
-import { RaspicamOptions, imageFlags, imageControls, ImageParameters } from './options';
+import { RaspicamOptions, imageFlags, imageControls } from './options';
 
 // maximum timeout allowed by raspicam command
 const INFINITY_MS = 999999999;
@@ -115,7 +115,7 @@ export class Raspicam extends EventEmitter  {
      * start Take a snapshot or start a timelapse or video recording
      * @return {Object} instance
      */
-    start(imageParamOverride: Partial<ImageParameters> = {}) {
+    start(imageParamOverride = {}) {
 
         if (this.childProcess !== null) {
             return false;
@@ -127,12 +127,12 @@ export class Raspicam extends EventEmitter  {
             return false;
         }
 
-        const overridenOpts = _.defaults(imageParamOverride, this.opts);
+        const overridenOpts: {[key: string]: any} = _.defaults(imageParamOverride, this.opts);
         this.opts.debug('opts', overridenOpts);
 
         // build the arguments
         const args = _.chain(Object.keys(overridenOpts))
-            .flatMap((opt: keyof ImageParameters) => {
+            .flatMap(opt => {
                 if (_.includes(imageFlags, opt)) {
                     return [`--${opt}`];
                 }

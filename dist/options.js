@@ -4,7 +4,8 @@ exports.imageFlags = ['decimate',
     'hflip',
     'vflip',
     'ISO',
-    'vstab'
+    'vstab',
+    'verbose'
 ];
 exports.imageControls = ['output',
     'width',

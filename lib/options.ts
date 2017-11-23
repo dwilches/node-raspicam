@@ -17,34 +17,7 @@ export interface RaspicamOptions {
     verbose: boolean;
 }
 
-export interface ImageParameters {
-    /* Controls */
-    width: number;
-    height: number;
-    quality: number;
-    timeout: number;
-    sharpness: number;
-    annotate: string;
-
-    contrast: number;
-    brightness: number;
-    saturation: number;
-    rotation: number;
-    shutter: number;
-    output: string;
-    exposure: string;
-    awb: string;
-
-    /* Flags */
-    decimate: boolean;
-    hflip: boolean;
-    vflip: boolean;
-    ISO: boolean;
-    vstab: boolean;
-    verbose: boolean;
-}
-
-export const imageFlags: (keyof ImageParameters)[] =
+export const imageFlags =
     [ 'decimate'
         , 'hflip'
         , 'vflip'
@@ -53,7 +26,7 @@ export const imageFlags: (keyof ImageParameters)[] =
         , 'verbose'
     ];
 
-export const imageControls: (keyof ImageParameters)[] =
+export const imageControls =
     [ 'output'
         , 'width'
         , 'height'

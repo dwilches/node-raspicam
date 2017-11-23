@@ -9,14 +9,6 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-var __assign = (this && this.__assign) || Object.assign || function(t) {
-    for (var s, i = 1, n = arguments.length; i < n; i++) {
-        s = arguments[i];
-        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-            t[p] = s[p];
-    }
-    return t;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 /*
   Link to the hardware: https://www.raspberrypi.org/documentation/hardware/camera/README.md
@@ -35,28 +27,44 @@ var _ = require("lodash");
 var options_1 = require("./options");
 // maximum timeout allowed by raspicam command
 var INFINITY_MS = 999999999;
-// commands
-var PHOTO_CMD = '/opt/vc/bin/raspistill';
-var TIMELAPSE_CMD = '/opt/vc/bin/raspistill';
-var VIDEO_CMD = '/opt/vc/bin/raspivid';
+var COMMANDS = {
+    'photo': '/opt/vc/bin/raspistill',
+    'timelapse': '/opt/vc/bin/raspistill',
+    'video': '/opt/vc/bin/raspivid'
+};
+var DEFAULT_OPTIONS = {
+    mode: 'photo',
+    filename: 'image.jpg',
+    filepath: process.cwd(),
+    encoding: 'jpg',
+    delay: 0,
+    height: 480,
+    quality: 75,
+    rotation: 0,
+    timeout: 1,
+    width: 640,
+    debug: console.log.bind(console, chalk.magenta('raspicam')),
+    log: console.log.bind(console, chalk.green('raspicam')),
+    verbose: false
+};
 var Raspicam = /** @class */ (function (_super) {
     __extends(Raspicam, _super);
-    function Raspicam(opts) {
+    function Raspicam(partialOpts) {
         var _this = _super.call(this) || this;
-        _this.opts = opts;
         _this.childProcess = null;
         _this.watcher = null;
+        _this.opts = _.defaults(_this.opts, DEFAULT_OPTIONS);
         var _a = _this.opts, filename = _a.filename, filepath = _a.filepath;
         _this.path = path.parse(path.resolve(process.cwd(), filepath, filename));
-        opts.log(_this.path);
+        // if not timeout provided, set to longest possible
+        if (typeof _this.opts.timeout === 'undefined') {
+            _this.opts.timeout = INFINITY_MS;
+        }
+        _this.opts.debug('opts', _this.opts);
+        _this.opts.debug('path', _this.path);
         process.on('exit', function () { return _this.destroy(); });
         return _this;
     }
-    Raspicam.create = function (partialOpts) {
-        var opts = __assign({ mode: 'photo', filename: 'image.jpg', filepath: process.cwd(), encoding: 'jpg', delay: 0, height: 480, quality: 75, rotation: 0, timeout: 0, width: 640, log: console.log.bind(console, chalk.magenta('raspicam')) }, partialOpts);
-        opts.log('opts', opts);
-        return new Raspicam(opts);
-    };
     Object.defineProperty(Raspicam.prototype, "output", {
         get: function () {
             return path.resolve(this.path.dir, this.path.base);
@@ -73,17 +81,17 @@ var Raspicam = /** @class */ (function (_super) {
         var _this = this;
         // Create the filepath if it doesn't already exist.
         if (!fs.existsSync(this.path.dir)) {
-            this.opts.log("creating directory at \"" + this.path.dir + "\", captured data will be saved there");
+            this.opts.debug("creating directory at \"" + this.path.dir + "\", captured data will be saved there");
             fs.mkdirSync(this.path.dir);
             fs.chmodSync(this.path.dir, 493); // set write permissions
         }
         // close previous directory watcher if any
         if (this.watcher !== null) {
-            this.opts.log('closing an existing file watcher');
+            this.opts.debug('closing an existing file watcher');
             this.watcher.close();
         }
         // start watching the directory where the images will be stored to emit signals on each new photo saved
-        this.opts.log("setting up watcher on path \"" + this.path.dir + "\"");
+        this.opts.debug("setting up watcher on path \"" + this.path.dir + "\"");
         this.watcher = fs.watch(this.path.dir, { recursive: true })
             .on('error', function (error) { return console.error('fs.watch error: ', error); })
             .on('change', function (event, filename) {
@@ -110,65 +118,47 @@ var Raspicam = /** @class */ (function (_super) {
         if (this.childProcess !== null) {
             return false;
         }
-        var cmd;
-        switch (this.opts.mode) {
-            case 'photo':
-                cmd = PHOTO_CMD;
-                break;
-            case 'timelapse':
-                cmd = TIMELAPSE_CMD;
-                // if no timelapse frequency provided, return false
-                // if (typeof this.opts.timelapse === 'undefined') {
-                //   this.emit('start', 'Error: must specify timelapse frequency option', new Date().getTime());
-                //   return false;
-                // }
-                // if not timeout provided, set to longest possible
-                if (typeof this.opts.timeout === 'undefined') {
-                    this.opts.timeout = INFINITY_MS;
-                }
-                break;
-            case 'video':
-                cmd = VIDEO_CMD;
-                break;
-            default:
-                this.emit('start', 'Error: mode must be photo, timelapse or video', new Date().getTime());
-                return false;
+        var cmd = COMMANDS[this.opts.mode];
+        if (!cmd) {
+            this.emit('start', 'Error: mode must be photo, timelapse or video', new Date().getTime());
+            return false;
         }
+        var overridenOpts = _.defaults(imageParamOverride, this.opts);
+        this.opts.debug('opts', overridenOpts);
         // build the arguments
-        var args = Object.keys(this.opts)
-            .map(function (opt) {
+        var args = _.chain(Object.keys(overridenOpts))
+            .flatMap(function (opt) {
             if (_.includes(options_1.imageFlags, opt)) {
-                return "--" + opt;
+                return ["--" + opt];
             }
             else if (_.includes(options_1.imageControls, opt)) {
-                return "--" + opt + " " + (imageParamOverride[opt] || _this.opts[opt].toString());
+                return ["--" + opt, overridenOpts[opt]];
             }
             else {
                 _this.opts.log("unknown options argument: \"" + opt + "\"");
-                return null;
+                return [];
             }
         })
-            .filter(function (opt) { return opt !== null; })
-            .reduce(function (accum, opt) { return accum.concat(opt.split(' ')); }, ['--output', this.output, '--nopreview', '--verbose']);
+            .value();
+        args.push('--output', this.output, '--nopreview');
         this.watchDirectory();
         // start child process
-        this.opts.log('calling....');
-        this.opts.log(cmd + args.join(' '));
-        this.childProcess
-            = child_process_1.spawn(cmd, args)
-                .on('exit', function (code, signal) { return _this.opts.log('exit event, code: ', code, ' signal: ', signal); })
-                .on('disconnect', function () { return _this.opts.log('disconnect event'); })
-                .on('error', function (error) { return _this.opts.log('error event', error); })
-                .on('message', function (message) { return _this.opts.log('message event', message); })
-                .on('readable', function () { return _this.opts.log('readable event'); })
-                .on('close', function (code, signal) {
-                _this.opts.log('close event, code: ', code, ' signal: ', signal);
-                // emit exit signal for process chaining over time
-                _this.emit('exit', new Date().getTime());
-            });
+        this.opts.debug('calling....');
+        this.opts.debug(cmd, args);
+        this.childProcess = child_process_1.spawn(cmd, args)
+            .on('exit', function (code, signal) { return _this.opts.debug('exit event, code: ', code, ' signal: ', signal); })
+            .on('disconnect', function () { return _this.opts.debug('disconnect event'); })
+            .on('error', function (error) { return _this.opts.debug('error event', error); })
+            .on('message', function (message) { return _this.opts.debug('message event', message); })
+            .on('readable', function () { return _this.opts.debug('readable event'); })
+            .on('close', function (code, signal) {
+            _this.opts.debug('close event, code: ', code, ' signal: ', signal);
+            // emit exit signal for process chaining over time
+            _this.emit('exit', new Date().getTime());
+        });
         // set up listeners for stdout, stderr and process exit
         this.childProcess.stdout.on('data', function (data) {
-            _this.opts.log('stdout: ' + data);
+            _this.opts.debug('stdout: ' + data);
         });
         this.childProcess.stderr.on('data', function (data) {
             _this.opts.log('stderr: ' + data);

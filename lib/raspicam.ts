@@ -53,6 +53,11 @@ export class Raspicam extends EventEmitter  {
         const { filename, filepath } = this.opts;
         this.path = path.parse(path.resolve(process.cwd(), filepath, filename));
 
+        // if not timeout provided, set to longest possible
+        if (typeof this.opts.timeout === 'undefined') {
+            this.opts.timeout = INFINITY_MS;
+        }
+
         this.opts.debug('opts', this.opts);
         this.opts.debug('path', this.path);
 
@@ -122,16 +127,6 @@ export class Raspicam extends EventEmitter  {
                 break;
             case 'timelapse':
                 cmd = TIMELAPSE_CMD;
-
-                // if no timelapse frequency provided, return false
-                // if (typeof this.opts.timelapse === 'undefined') {
-                //   this.emit('start', 'Error: must specify timelapse frequency option', new Date().getTime());
-                //   return false;
-                // }
-                // if not timeout provided, set to longest possible
-                if (typeof this.opts.timeout === 'undefined') {
-                    this.opts.timeout = INFINITY_MS;
-                }
                 break;
             case 'video':
                 cmd = VIDEO_CMD;

@@ -52,7 +52,7 @@ var Raspicam = /** @class */ (function (_super) {
         _this.opts = _.defaults(partialOpts, DEFAULT_OPTIONS);
         var parsedPath = path.parse(_this.opts.output);
         _this.basedir = parsedPath.dir;
-        if (parsedPath.ext !== _this.opts.encoding) {
+        if (parsedPath.ext !== "." + _this.opts.encoding) {
             _this.opts.log("Warning: Filename's extension (" + parsedPath.ext + ") differs from the encoding (" + _this.opts.encoding + "). Using encoding.");
             parsedPath.ext = _this.opts.encoding;
             _this.opts.output = path.format(parsedPath);
@@ -121,7 +121,7 @@ var Raspicam = /** @class */ (function (_super) {
         if (this.childProcess !== null) {
             return false;
         }
-        this.stop();
+        //this.stop();
         var overridenOpts = _.defaults(imageParamOverride, this.opts);
         this.opts.debug('opts', overridenOpts);
         // build the arguments

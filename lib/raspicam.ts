@@ -51,7 +51,7 @@ export class Raspicam extends EventEmitter  {
 
         const parsedPath: path.ParsedPath = path.parse(this.opts.output);
         this.basedir = parsedPath.dir;
-        if (parsedPath.ext !== this.opts.encoding) {
+        if (parsedPath.ext !== `.${this.opts.encoding}`) {
             this.opts.log(`Warning: Filename's extension (${parsedPath.ext}) differs from the encoding (${this.opts.encoding}). Using encoding.`);
             parsedPath.ext = this.opts.encoding;
             this.opts.output = path.format(parsedPath);
@@ -129,7 +129,7 @@ export class Raspicam extends EventEmitter  {
         if (this.childProcess !== null) {
             return false;
         }
-        this.stop();
+        //this.stop();
 
         const overridenOpts: {[key: string]: any} = _.defaults(imageParamOverride, this.opts);
         this.opts.debug('opts', overridenOpts);

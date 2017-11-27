@@ -31,7 +31,8 @@ const DEFAULT_OPTIONS: RaspicamOptions = {
     timeout: 1,
     debug: console.log.bind(console, chalk.magenta('raspicam')),
     log: console.log.bind(console, chalk.green('raspicam')),
-    verbose: false
+    verbose: false,
+    justPrintCommands: false
 };
 
 export class Raspicam extends EventEmitter  {
@@ -155,7 +156,16 @@ export class Raspicam extends EventEmitter  {
 
         // start child process
         this.opts.debug('calling....');
+        if (this.opts.justPrintCommands)
+        {
+            this.opts.log(this.cmd, args);
+            fs.writeFileSync(this.opts.output, "This is a simulation");
+            this.emit('read', null, new Date().getTime(), this.opts.output);
+            return;
+        }
+
         this.opts.debug(this.cmd, args);
+
         this.childProcess = spawn(this.cmd, args as string[])
 
         // The 'exit' event is emitted after the child process ends.

@@ -9,10 +9,7 @@ exports.imageFlags = ['decimate',
 ];
 exports.imageControls = ['output',
     'width',
-    'height'
-    // , 'annotate'
-    // , 'quality'
-    ,
+    'height',
     'sharpness',
     'contrast',
     'timeout',

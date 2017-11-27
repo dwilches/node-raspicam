@@ -14,6 +14,7 @@ export interface RaspicamOptions {
     encoding: 'jpg' | 'bmp' | 'gif' | 'png';
     timeout: number;
     verbose: boolean;
+    justPrintCommands: boolean;
 }
 
 export const imageFlags =

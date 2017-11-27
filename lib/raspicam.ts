@@ -129,6 +129,7 @@ export class Raspicam extends EventEmitter  {
         if (this.childProcess !== null) {
             return false;
         }
+        this.stop();
 
         const overridenOpts: {[key: string]: any} = _.defaults(imageParamOverride, this.opts);
         this.opts.debug('opts', overridenOpts);

@@ -121,6 +121,7 @@ var Raspicam = /** @class */ (function (_super) {
         if (this.childProcess !== null) {
             return false;
         }
+        this.stop();
         var overridenOpts = _.defaults(imageParamOverride, this.opts);
         this.opts.debug('opts', overridenOpts);
         // build the arguments
@@ -145,8 +146,7 @@ var Raspicam = /** @class */ (function (_super) {
         if (this.opts.justPrintCommands) {
             this.opts.log(this.cmd, args);
             fs.writeFileSync(this.opts.output, "This is a simulation");
-            this.emit('start', null, new Date().getTime());
-            this.emit('exit', new Date().getTime());
+            this.emit('read', null, new Date().getTime(), this.opts.output);
             return;
         }
         this.opts.debug(this.cmd, args);
